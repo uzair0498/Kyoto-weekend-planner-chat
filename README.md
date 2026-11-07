@@ -8,7 +8,7 @@ A chat-style planner for a Kyoto weekend. Sending a message shows a typing indic
 
 Requires Node 20.9+. Run `npm install && npm run dev`, then open http://localhost:3000.
 
-To fire the error bubble, type `Break the planner` and press Enter. It fails the first time only; reload the page to reset, then click **Try again** to see the three cards.
+To fire the error bubble, type `Break the planner` and press Enter. It fails the first time only: the fail flag is a `useRef` inside the chat component, so a page reload clears it and the next try fails again. Click **Try again** to see the three cards.
 
 ![Error bubble shown after typing "Break the planner"](docs/error-bubble.png)
 
