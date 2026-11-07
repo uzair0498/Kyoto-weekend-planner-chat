@@ -94,6 +94,13 @@ export default function Chat() {
         <h1 className="text-lg font-semibold">Kyoto Trip Planner</h1>
       </header>
 
+      <p
+        role="note"
+        className="border-b border-amber-200 bg-amber-50 px-4 py-1.5 text-center text-xs text-amber-900 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-200"
+      >
+        These trips are sample data. Nothing is booked.
+      </p>
+
       <main className="flex-1 overflow-y-auto px-4 py-6">
         <div className="mx-auto flex max-w-2xl flex-col gap-3">
           {messages.length === 0 && !isTyping ? (
