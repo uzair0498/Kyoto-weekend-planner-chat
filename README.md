@@ -8,6 +8,8 @@ A chat-style planner for a Kyoto weekend. Sending a message shows a typing indic
 
 Requires Node 20.9+. Run `npm install && npm run dev`, then open http://localhost:3000.
 
+To fire the error bubble, type `Break the planner` and press Enter. It fails the first time only; reload the page to reset, then click **Try again** to see the three cards.
+
 ## Placeholder fields
 
 These card fields are filler, not real data:

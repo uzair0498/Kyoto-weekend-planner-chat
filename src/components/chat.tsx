@@ -1,16 +1,17 @@
 "use client";
 
 import { FormEvent, useEffect, useRef, useState } from "react";
-import { mockResponse, TripCard } from "@/data/mockResponse";
+import { TripCard } from "@/data/mockResponse";
+import { FAIL_TRIGGER_PHRASE, fetchMockPlan } from "@/data/mockPlanner";
 import StayCard from "@/components/stay-card";
 import ExperienceCard from "@/components/experience-card";
 import FoodCard from "@/components/food-card";
+import ErrorBubble from "@/components/error-bubble";
 
 type Message =
   | { id: number; kind: "user"; text: string }
-  | { id: number; kind: "assistant"; card: TripCard };
-
-const TYPING_DELAY_MS = 1500;
+  | { id: number; kind: "assistant"; card: TripCard }
+  | { id: number; kind: "error" };
 
 export default function Chat() {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -18,41 +19,71 @@ export default function Chat() {
   const [isTyping, setIsTyping] = useState(false);
   const threadEndRef = useRef<HTMLDivElement>(null);
   const nextId = useRef(0);
+  const mountedRef = useRef(false);
+  // Component state, so a page reload resets it (fail-once rule).
+  const hasFailedOnce = useRef(false);
+  const lastRequestRef = useRef("");
 
   function createId() {
     nextId.current += 1;
     return nextId.current;
   }
 
-  // While the assistant is "typing", wait, then append every mock card in order.
   useEffect(() => {
-    if (!isTyping) return;
-
-    const timer = setTimeout(() => {
-      const cards: Message[] = mockResponse.map((card) => ({
-        id: createId(),
-        kind: "assistant",
-        card,
-      }));
-      setMessages((prev) => [...prev, ...cards]);
-      setIsTyping(false);
-    }, TYPING_DELAY_MS);
-
-    return () => clearTimeout(timer);
-  }, [isTyping]);
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     threadEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isTyping]);
+
+  // Sends a request, shows the typing dots, then appends either the cards in order or an error.
+  async function runRequest(text: string) {
+    lastRequestRef.current = text;
+    const shouldFail = text === FAIL_TRIGGER_PHRASE && !hasFailedOnce.current;
+    if (shouldFail) hasFailedOnce.current = true;
+
+    setIsTyping(true);
+    try {
+      const cards = await fetchMockPlan(shouldFail);
+      if (!mountedRef.current) return;
+      const cardMessages: Message[] = cards.map((card) => ({
+        id: createId(),
+        kind: "assistant",
+        card,
+      }));
+      setMessages((prev) => [...prev, ...cardMessages]);
+    } catch {
+      if (!mountedRef.current) return;
+      const errorMessage: Message = { id: createId(), kind: "error" };
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
+      if (mountedRef.current) setIsTyping(false);
+    }
+  }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const text = draft.trim();
     if (!text || isTyping) return;
 
-    setMessages((prev) => [...prev, { id: createId(), kind: "user", text }]);
+    const userMessage: Message = { id: createId(), kind: "user", text };
+    // A new message replaces any error card still showing.
+    setMessages((prev) => [
+      ...prev.filter((message) => message.kind !== "error"),
+      userMessage,
+    ]);
     setDraft("");
-    setIsTyping(true);
+    void runRequest(text);
+  }
+
+  function handleRetry() {
+    if (isTyping) return;
+    setMessages((prev) => prev.filter((message) => message.kind !== "error"));
+    void runRequest(lastRequestRef.current);
   }
 
   const inputLocked = isTyping;
@@ -70,21 +101,33 @@ export default function Chat() {
               Start planning your Kyoto weekend by sending a message below.
             </p>
           ) : (
-            messages.map((message) =>
-              message.kind === "user" ? (
-                <div key={message.id} className="flex justify-end">
-                  <div className="max-w-[80%] whitespace-pre-wrap break-words rounded-2xl rounded-br-sm bg-blue-600 px-4 py-2 text-white">
-                    {message.text}
+            messages.map((message) => {
+              if (message.kind === "user") {
+                return (
+                  <div key={message.id} className="flex justify-end">
+                    <div className="max-w-[80%] whitespace-pre-wrap break-words rounded-2xl rounded-br-sm bg-blue-600 px-4 py-2 text-white">
+                      {message.text}
+                    </div>
                   </div>
-                </div>
-              ) : (
+                );
+              }
+              if (message.kind === "error") {
+                return (
+                  <div key={message.id} className="flex justify-start">
+                    <div className="w-full max-w-[85%]">
+                      <ErrorBubble onRetry={handleRetry} disabled={isTyping} />
+                    </div>
+                  </div>
+                );
+              }
+              return (
                 <div key={message.id} className="flex justify-start">
                   <div className="w-full max-w-[85%]">
                     <TripCardView card={message.card} />
                   </div>
                 </div>
-              )
-            )
+              );
+            })
           )}
 
           {isTyping && <TypingBubble />}
