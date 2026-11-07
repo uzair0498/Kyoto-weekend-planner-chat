@@ -10,6 +10,10 @@ Requires Node 20.9+. Run `npm install && npm run dev`, then open http://localhos
 
 To fire the error bubble, type `Break the planner` and press Enter. It fails the first time only; reload the page to reset, then click **Try again** to see the three cards.
 
+![Error bubble shown after typing "Break the planner"](docs/error-bubble.png)
+
+![Three cards shown after clicking Try again](docs/three-cards-after-retry.png)
+
 ## Placeholder fields
 
 These card fields are filler, not real data:
