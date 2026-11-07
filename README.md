@@ -16,8 +16,6 @@ To fire the error bubble, type `Break the planner` and press Enter. It fails the
 
 ## Checklist before sharing
 
-**Last tested:** 7 November 2026 on app commit [`14ed7b0`](https://github.com/uzair0498/Kyoto-weekend-planner-chat/commit/14ed7b0).
-
 | Check | Phone | Laptop |
 | --- | --- | --- |
 | 3 of 3 cards (thinking state, then stay, experience, food; each looks different) | ✅ | ✅ |
